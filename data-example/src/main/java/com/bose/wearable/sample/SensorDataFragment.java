@@ -8,18 +8,24 @@ package com.bose.wearable.sample;
 //  Copyright © 2018 Bose Corporation. All rights reserved.
 //
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.ArrayMap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleObserver;
@@ -37,9 +43,14 @@ import com.bose.wearable.services.wearablesensor.SensorConfiguration;
 import com.bose.wearable.services.wearablesensor.SensorInformation;
 import com.bose.wearable.services.wearablesensor.SensorType;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static androidx.lifecycle.Lifecycle.Event.ON_PAUSE;
 import static androidx.lifecycle.Lifecycle.Event.ON_RESUME;
@@ -56,6 +67,10 @@ public class SensorDataFragment extends Fragment {
     private Button mSamplePeriodButton;
     private final Map<SensorType, SensorDataVectorView> mSensorViews = new HashMap<>();
     private final Map<SensorType, ObservedRateUpdater> mRateUpdaters = new ArrayMap<>();
+
+    //Data Writer
+    private DataWriterTask mWriter;
+    private Timer mTimer;
 
     @Nullable
     @Override
@@ -83,31 +98,31 @@ public class SensorDataFragment extends Fragment {
         mViewModel = ViewModelProviders.of(requireActivity()).get(SessionViewModel.class);
 
         mViewModel.wearableSensorInfo()
-            .observe(this, this::onSensorInfoRead);
+                .observe(this, this::onSensorInfoRead);
 
         mViewModel.wearableSensorConfiguration()
-            .observe(this, this::onSensorConfRead);
+                .observe(this, this::onSensorConfRead);
 
         mViewModel.accelerometerData()
-            .observe(this, this::onSensorData);
+                .observe(this, this::onSensorData);
 
         mViewModel.gyroscopeData()
-            .observe(this, this::onSensorData);
+                .observe(this, this::onSensorData);
 
         mViewModel.rotationVectorData()
-            .observe(this, this::onSensorData);
+                .observe(this, this::onSensorData);
 
         mViewModel.gameRotationData()
-            .observe(this, this::onSensorData);
+                .observe(this, this::onSensorData);
 
         mViewModel.orientationData()
-            .observe(this, this::onSensorData);
+                .observe(this, this::onSensorData);
 
         mViewModel.magnetometerData()
-            .observe(this, this::onSensorData);
+                .observe(this, this::onSensorData);
 
         mViewModel.uncalibratedMagnetometerData()
-            .observe(this, this::onSensorData);
+                .observe(this, this::onSensorData);
 
         updateSamplePeriod(mViewModel.sensorSamplePeriod());
 
@@ -124,6 +139,14 @@ public class SensorDataFragment extends Fragment {
         };
 
         getLifecycle().addObserver(lifecycleObserver);
+        mTimer = new Timer("IMUDataWriter");
+        mWriter = new DataWriterTask();
+        mTimer.scheduleAtFixedRate(mWriter, 0, 50);
+
+        // No explanation needed; request the permission
+        ActivityCompat.requestPermissions(this.getActivity(),
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                1);
     }
 
     @Override
@@ -239,7 +262,7 @@ public class SensorDataFragment extends Fragment {
         final short millis = samplePeriod != null ? samplePeriod.milliseconds() : 0;
         final double hz = millis != 0 ? 1000.0f / millis : 0;
         final String txt = requireContext()
-            .getString(R.string.sample_period_ms_hz, millis, String.valueOf(hz));
+                .getString(R.string.sample_period_ms_hz, millis, String.valueOf(hz));
         mSamplePeriodText.setText(txt);
     }
 
@@ -254,6 +277,17 @@ public class SensorDataFragment extends Fragment {
         if (rateUpdater != null) {
             rateUpdater.updateReceived();
         }
+
+        switch (sensorType) {
+            case ACCELEROMETER:
+                sensorValue.vector(mWriter.getmLinearAccVector(), 0);
+            case GYROSCOPE:
+                sensorValue.vector(mWriter.getmGyroVector(), 0);
+            case ORIENTATION:
+                sensorValue.vector(mWriter.getmRotationVector(), 0);
+            default:
+                break;
+        }
     }
 
     private void resumeRateUpdaters() {
@@ -267,6 +301,100 @@ public class SensorDataFragment extends Fragment {
     private void stopRateUpdaters() {
         for (final ObservedRateUpdater rateUpdater : mRateUpdaters.values()) {
             rateUpdater.stop();
+        }
+    }
+
+    class DataWriterTask extends TimerTask {
+        private long mStartTime;
+        private float[] mRotationVector = new float[3];
+        private float[] mLinearAccVector = new float[3];
+        private float[] mGyroVector = new float [3];
+
+        private File mFile;
+        private FileWriter fw;
+
+        public DataWriterTask() {
+            // Get the directory for the user's public pictures directory.
+            mFile = new File("/sdcard/", "output.csv");
+            Log.i("Data File:", mFile.getAbsolutePath());
+            try {
+                fw = new FileWriter(mFile);
+                fw.write("Time,RoatX,RoatY,RoatZ," +
+                        "GyroX,GyroY,GyroZ," +
+                        "AccX,AccY,AccZ,\n");
+                fw.flush();
+            } catch (IOException e) {
+                System.out.println(e.toString());
+            }
+            mStartTime = System.currentTimeMillis();
+        }
+
+        public void setmGyroVector(float[] mGyroVector) {
+            this.mGyroVector = mGyroVector;
+        }
+
+        public void setmRotationVector(float[] mRotationVector) {
+            this.mRotationVector = mRotationVector;
+        }
+
+        public void setmLinearAccVector(float[] mLinearAccVector) {
+            this.mLinearAccVector = mLinearAccVector;
+        }
+
+        public float[] getmGyroVector() {
+            return mGyroVector;
+        }
+
+        public float[] getmRotationVector() {
+            return mRotationVector;
+        }
+
+        public float[] getmLinearAccVector() {
+            return mLinearAccVector;
+        }
+
+        @Override
+        public void run() {
+            try {
+                long time = System.currentTimeMillis() - mStartTime;
+                fw.write(Long.toString(time) + ",");
+                for (int i = 0; i < mRotationVector.length; i++)
+                    fw.write(mRotationVector[i] + ",");
+                for (int i = 0; i < mGyroVector.length; i++)
+                    fw.write(mGyroVector[i] + ",");
+                for (int i = 0; i < mLinearAccVector.length; i++)
+                    fw.write(mLinearAccVector[i] + ",");
+                fw.write("\n");
+                fw.flush();
+            }
+            catch (IOException e) {
+                System.out.println(e.toString());
+            }
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(getActivity(), "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
         }
     }
 }
