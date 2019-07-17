@@ -12,28 +12,31 @@
         tools:layout="@layout/device_fragment">
         <action
             android:id="@+id/action_deviceFragment_to_deviceInfoFragment"
-            app:destination="@id/deviceInfoFragment"/>
+            app:destination="@id/deviceInfoFragment" />
         <action
             android:id="@+id/action_deviceFragment_to_devicePropertiesFragment"
-            app:destination="@id/devicePropertiesFragment"/>
+            app:destination="@id/devicePropertiesFragment" />
         <action
             android:id="@+id/action_deviceFragment_to_WearableDeviceInfoFragment"
-            app:destination="@id/wearableDeviceInfoFragment"/>
+            app:destination="@id/wearableDeviceInfoFragment" />
         <action
             android:id="@+id/action_deviceFragment_to_sensorInfoListFragment"
-            app:destination="@id/sensorInfoListFragment"/>
+            app:destination="@id/sensorInfoListFragment" />
         <action
             android:id="@+id/action_deviceFragment_to_sensorDataFragment"
-            app:destination="@id/sensorDataFragment"/>
+            app:destination="@id/sensorDataFragment" />
         <action
             android:id="@+id/action_deviceFragment_to_sensorConfigFragment"
-            app:destination="@id/sensorConfigFragment"/>
+            app:destination="@id/sensorConfigFragment" />
         <action
             android:id="@+id/action_deviceFragment_to_gestureConfigFragment"
-            app:destination="@id/gestureConfigFragment"/>
+            app:destination="@id/gestureConfigFragment" />
         <action
             android:id="@+id/action_deviceFragment_to_gestureDataFragment"
-            app:destination="@id/gestureDataFragment"/>
+            app:destination="@id/gestureDataFragment" />
+        <action
+            android:id="@+id/action_deviceFragment_to_tiltFragment"
+            app:destination="@id/tiltFragment" />
     </fragment>
     <fragment
         android:id="@+id/deviceInfoFragment"
@@ -101,10 +104,15 @@
         android:id="@+id/gestureConfigFragment"
         android:name="com.bose.wearable.sample.GestureConfigFragment"
         android:label="@string/gesture_config_fragment_title"
-        tools:layout="@layout/fragment_gesture_conf"/>
+        tools:layout="@layout/fragment_gesture_conf" />
     <fragment
         android:id="@+id/gestureDataFragment"
         android:name="com.bose.wearable.sample.GestureDataFragment"
         android:label="@string/gesture_data_fragment_title"
         tools:layout="@layout/fragment_gesture_data"/>
+    <fragment
+        android:id="@+id/tiltFragment"
+        android:name="com.bose.wearable.sample.TiltFragment"
+        android:label="fragment_tilt"
+        tools:layout="@layout/fragment_tilt" />
 </navigation>

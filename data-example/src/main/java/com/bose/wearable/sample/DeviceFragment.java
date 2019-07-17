@@ -56,6 +56,9 @@ public class DeviceFragment extends Fragment {
         final View wearableSensorData = view.findViewById(R.id.sensor_data_button);
         wearableSensorData.setOnClickListener(v -> onWearableSensorDataSelected());
 
+        final View wearableTilt = view.findViewById(R.id.tilt_button);
+        wearableTilt.setOnClickListener(v -> onWearableTiltSelected());
+
         final View wearableGestureConf = view.findViewById(R.id.gestures_configuration);
         wearableGestureConf.setOnClickListener(v -> onWearableGestureConfSelected());
 
@@ -107,6 +110,10 @@ public class DeviceFragment extends Fragment {
 
     private void onWearableSensorDataSelected() {
         navigateTo(R.id.action_deviceFragment_to_sensorDataFragment);
+    }
+
+    private void onWearableTiltSelected() {
+        navigateTo(R.id.action_deviceFragment_to_tiltFragment);
     }
 
     private void onWearableGestureConfSelected() {

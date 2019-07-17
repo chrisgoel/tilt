@@ -55,6 +55,12 @@
             android:layout_height="wrap_content"
             android:text="@string/wearable_sensor_data" />
 
+        <com.bose.wearable.sample.views.SubSectionView
+            android:id="@+id/tilt_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tilt" />
+
         <TextView
             android:id="@+id/gestures_header"
             style="@style/SectionHeader"

@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Data Example</string>
 
+    <string name="exercise1_name">Sample Exercise</string>
     <string name="device_header">Device</string>
     <string name="device_info">Device Information</string>
     <string name="device_properties">Device Properties</string>
